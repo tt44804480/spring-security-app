@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/zj
+    username: root
+    password: 1234
+  session:
+    store-type: none
+  redis:
+    host: localhost
+    database: 0
+    port: 6379
+security:
+  basic:
+    enabled: true
+logging:
+  level:
+    com.liuliuliu.model: debug
+mybatis:
+  #config-location: classpath:com/conf/mybatisConfig.xml(用配置类代替--MybatisConfig类)
+  mapper-locations: classpath:com/liuliuliu/model/mapper/*Mapper.xml
+
+#pagehelper分页插件
+pagehelper:
+    helperDialect: mysql
+    reasonable: true
+    supportMethodsArguments: true
+    params: count=countSql
+
+
+
+
