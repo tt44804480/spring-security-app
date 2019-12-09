@@ -57,6 +57,7 @@ public class MyJwtTokenStore implements TokenStore {
 
     @Override
     public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
+
     }
 
     @Override

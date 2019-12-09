@@ -37,6 +37,11 @@ public class ValidateSmsCodeFilter extends OncePerRequestFilter {
 
         if(StringUtils.equals("/authentication/mobile",request.getRequestURI())
                 && StringUtils.equalsIgnoreCase(request.getMethod(), "post")){
+            /**
+             * 请求中要带
+             * 请求头：Authorization
+             *  body中：grant_type
+             */
             try {
                 SmsCode codeInSession = (SmsCode) codeRepository.get(request.getParameter("mobile"));
                 String codeInRequest = request.getParameter("smsCode");

@@ -3,6 +3,8 @@ package com.liuliuliu.security.authentication;
 import com.liuliuliu.security.validate.jwtTokenStore.MyJwtAccessTokenConverter;
 import com.liuliuliu.security.validate.jwtTokenStore.MyJwtTokenStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,8 +14,6 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
-import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +40,18 @@ public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigure
     @Autowired(required = false)
     private MyJwtAccessTokenConverter jwtAccessTokenConverter;
 
+    @Autowired
+    private MyWebResponseExceptionTranslator myWebResponseExceptionTranslator;
+
+    public static MyTokenService myTokenService;
+
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.tokenStore(tokenStore)
                 .authenticationManager(authenticationManager)
-                .userDetailsService(userDetailsService);
+                .userDetailsService(userDetailsService)
+                .exceptionTranslator(myWebResponseExceptionTranslator);
+                //.tokenServices(createTokenService(endpoints));
 
         if(jwtAccessTokenConverter != null){
             TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
@@ -54,10 +61,8 @@ public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigure
 
             endpoints.accessTokenConverter(jwtAccessTokenConverter)
                         .tokenEnhancer(tokenEnhancerChain);
-
-
-
         }
+        createTokenService(endpoints);
     }
 
     @Override
@@ -72,5 +77,17 @@ public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigure
                 .authorizedGrantTypes("refresh_token","password","mobile")
                 //请求参数中的scope只可以是配置的值,类似权限
                 .scopes("all","read","write");
+    }
+
+    private MyTokenService createTokenService(AuthorizationServerEndpointsConfigurer endpoints){
+        MyTokenService myTokenService = new MyTokenService();
+
+        myTokenService.setTokenStore(this.tokenStore);
+        myTokenService.setClientDetailsService(endpoints.getClientDetailsService());
+        myTokenService.setTokenEnhancer(endpoints.getTokenEnhancer());
+        myTokenService.setAuthenticationManager(this.authenticationManager);
+
+        ImoocAuthorizationServerConfig.myTokenService = myTokenService;
+        return myTokenService;
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.context.support.ReloadableResourceBundleMessageSource
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -49,6 +50,12 @@ public class ImoocResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Autowired
     private SmsCodeAuthenticationSecurityConfig smsCodeAuthenticationSecurityConfig;
 
+    @Autowired
+    private MyAccessDeniedHandler myAccessDeniedHandler;
+
+    @Autowired
+    private MyAuthenticationEntryPoint myAuthenticationEntryPoint;
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
 
@@ -70,6 +77,15 @@ public class ImoocResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .csrf()
                     .disable()
                 .apply(smsCodeAuthenticationSecurityConfig);
+    }
+
+    @Override
+    public void configure(ResourceServerSecurityConfigurer resources) {
+        //自定义资源访问认证异常，没有token，或token错误，使用MyAuthenticationEntryPoint
+        resources.authenticationEntryPoint(myAuthenticationEntryPoint);
+        resources.accessDeniedHandler(myAccessDeniedHandler);
+
+        resources.tokenServices(ImoocAuthorizationServerConfig.myTokenService);
     }
 
     /** 注册bean */

@@ -1,7 +1,5 @@
 package com.liuliuliu.security.validate.jwtTokenStore;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -18,7 +16,6 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.util.Assert;
 
 import java.security.KeyPair;
@@ -255,14 +252,15 @@ public class MyJwtAccessTokenConverter implements TokenEnhancer, AccessTokenConv
             //在此处验证是否注销了
             Map<String, Object> map = objectMapper.parseMap(content);
 
+            //每次执行方法都会在这里解析token。
             logger.info("验证username:{}是否注销",map.get("user_name"));
             logger.info("验证username:{}token是否一致",map.get("user_name"));
             if (map.containsKey(EXP) && map.get(EXP) instanceof Integer) {
                 Integer intValue = (Integer) map.get(EXP);
                 map.put(EXP, new Long(intValue));
             }
-            throw new RuntimeException("asf");
-            //return map;
+            //throw new RuntimeException("asf");
+            return map;
         }catch (Exception e){
             throw new InvalidTokenException("201", e);
         }
