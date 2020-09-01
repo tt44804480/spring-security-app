@@ -1,5 +1,7 @@
 package com.liuliuliu.security.validate.code;
 
+import com.liuliuliu.security.authentication.exception.VolidateCodeException;
+import com.liuliuliu.security.constant.AuthorizationConstant;
 import com.liuliuliu.security.validate.ValidateCodeRepository;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,7 @@ public class ValidateSmsCodeFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        if(StringUtils.equals("/authentication/mobile",request.getRequestURI())
+        if(StringUtils.equals(AuthorizationConstant.MOBILE_CODE_LOGIN_URI,request.getRequestURI())
                 && StringUtils.equalsIgnoreCase(request.getMethod(), "post")){
             /**
              * 请求中要带

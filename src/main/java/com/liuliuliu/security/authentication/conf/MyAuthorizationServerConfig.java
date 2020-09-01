@@ -1,10 +1,10 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.conf;
 
-import com.liuliuliu.security.validate.jwtTokenStore.MyJwtAccessTokenConverter;
-import com.liuliuliu.security.validate.jwtTokenStore.MyJwtTokenStore;
+import com.liuliuliu.security.authentication.jwtTokenStore.MyTokenService;
+import com.liuliuliu.security.authentication.MyWebResponseExceptionTranslator;
+import com.liuliuliu.security.authentication.jwtTokenStore.MyJwtAccessTokenConverter;
+import com.liuliuliu.security.authentication.jwtTokenStore.MyJwtTokenStore;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,13 +26,13 @@ import java.util.List;
  */
 @Configuration
 @EnableAuthorizationServer
-public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter{
+public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter{
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserDetailsService usernamePasswordUserDetailsService;
 
     @Autowired
     private MyJwtTokenStore tokenStore;
@@ -49,7 +49,7 @@ public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigure
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.tokenStore(tokenStore)
                 .authenticationManager(authenticationManager)
-                .userDetailsService(userDetailsService)
+                .userDetailsService(usernamePasswordUserDetailsService)
                 .exceptionTranslator(myWebResponseExceptionTranslator);
                 //.tokenServices(createTokenService(endpoints));
 
@@ -87,7 +87,7 @@ public class ImoocAuthorizationServerConfig extends AuthorizationServerConfigure
         myTokenService.setTokenEnhancer(endpoints.getTokenEnhancer());
         myTokenService.setAuthenticationManager(this.authenticationManager);
 
-        ImoocAuthorizationServerConfig.myTokenService = myTokenService;
+        MyAuthorizationServerConfig.myTokenService = myTokenService;
         return myTokenService;
     }
 }

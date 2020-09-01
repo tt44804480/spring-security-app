@@ -1,5 +1,6 @@
 package com.liuliuliu.security.authentication.mobile;
 
+import com.liuliuliu.security.constant.AuthorizationConstant;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -27,7 +28,7 @@ public class SmsAuthenticationFilter  extends AbstractAuthenticationProcessingFi
     // ===================================================================================================
 
     public SmsAuthenticationFilter() {
-        super(new AntPathRequestMatcher("/authentication/mobile", "POST"));
+        super(new AntPathRequestMatcher(AuthorizationConstant.MOBILE_CODE_LOGIN_URI, "POST"));
     }
 
     // ~ Methods

@@ -1,4 +1,4 @@
-package com.liuliuliu.security.validate.jwtTokenStore;
+package com.liuliuliu.security.authentication.jwtTokenStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -249,12 +249,7 @@ public class MyJwtAccessTokenConverter implements TokenEnhancer, AccessTokenConv
         }
         try {
             String content = jwt.getClaims();
-            //在此处验证是否注销了
             Map<String, Object> map = objectMapper.parseMap(content);
-
-            //每次执行方法都会在这里解析token。
-            logger.info("验证username:{}是否注销",map.get("user_name"));
-            logger.info("验证username:{}token是否一致",map.get("user_name"));
             if (map.containsKey(EXP) && map.get(EXP) instanceof Integer) {
                 Integer intValue = (Integer) map.get(EXP);
                 map.put(EXP, new Long(intValue));

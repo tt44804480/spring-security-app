@@ -1,5 +1,7 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.jwtTokenStore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import org.springframework.security.oauth2.common.exceptions.InvalidTokenExcepti
 import org.springframework.security.oauth2.provider.*;
 import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -25,6 +28,8 @@ import java.util.UUID;
 //@Component
 public class MyTokenService implements AuthorizationServerTokenServices, ResourceServerTokenServices,
         ConsumerTokenServices, InitializingBean {
+
+    Logger logger = LoggerFactory.getLogger(MyTokenService.class);
 
     private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
 
@@ -226,6 +231,10 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
         }
 
         //token验证成功；将用户信息放进LocalThread
+        //每次执行方法都会在这里解析token。
+        Object principal = result.getPrincipal();
+        logger.info("验证username:{}是否注销",principal);
+        logger.info("验证username:{}token是否一致",principal);
         return result;
     }
 
@@ -405,4 +414,7 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
         this.clientDetailsService = clientDetailsService;
     }
 
+    public ClientDetailsService getClientDetailsService() {
+        return clientDetailsService;
+    }
 }

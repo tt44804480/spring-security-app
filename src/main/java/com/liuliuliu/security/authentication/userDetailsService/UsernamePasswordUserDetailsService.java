@@ -1,5 +1,6 @@
-package com.liuliuliu.security;
+package com.liuliuliu.security.authentication.userDetailsService;
 
+import com.liuliuliu.security.db.service.OauthUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,27 +18,25 @@ import org.springframework.stereotype.Component;
  * @author liutianyang
  * @since 1.0
  */
-@Component("myUserDetailsService")
-public class MyUserDetailsService implements UserDetailsService {
+@Component("usernamePasswordUserDetailsService")
+public class UsernamePasswordUserDetailsService implements UserDetailsService {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private OauthUserService oauthUserService;
 
     /**
      *  返回一个UserDetails类型的对象，交给springsecurity进行登录校验。
-     * @param username
-     * @return
+     * @param username 用户名
+     * @return UserDetails
      * @throws UsernameNotFoundException
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        logger.info("username: " + username);
-        logger.info("加密后的密码：" + passwordEncoder.encode("1234"));
-        return new User(username,
-                passwordEncoder.encode("1234"),
-                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,ROLE_USER"));
+        UserDetails userDetails = oauthUserService.getUserDetails(username);
+        logger.info("用户：{}开始登录", userDetails.getUsername());
+        return userDetails;
     }
 }

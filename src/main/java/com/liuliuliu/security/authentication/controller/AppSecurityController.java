@@ -1,4 +1,4 @@
-package com.liuliuliu.security.validate;
+package com.liuliuliu.security.authentication.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
