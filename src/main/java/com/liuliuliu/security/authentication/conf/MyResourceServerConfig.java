@@ -3,6 +3,7 @@ package com.liuliuliu.security.authentication.conf;
 import com.liuliuliu.security.authentication.MyAccessDeniedHandler;
 import com.liuliuliu.security.authentication.MyAuthenticationEntryPoint;
 import com.liuliuliu.security.authentication.MyAuthenticationManager;
+import com.liuliuliu.security.authentication.jwtTokenStore.MyResourceServerTokenServices;
 import com.liuliuliu.security.authentication.mobile.SmsCodeAuthenticationSecurityConfig;
 import com.liuliuliu.security.constant.AuthorizationConstant;
 import com.liuliuliu.security.validate.code.ValidateCodeFilter;
@@ -55,6 +56,9 @@ public class MyResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Autowired
     private MyAuthenticationEntryPoint myAuthenticationEntryPoint;
 
+//    @Autowired
+//    MyResourceServerTokenServices myResourceServerTokenServices;
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
 
@@ -84,15 +88,15 @@ public class MyResourceServerConfig extends ResourceServerConfigurerAdapter {
         resources.authenticationEntryPoint(myAuthenticationEntryPoint);
         resources.accessDeniedHandler(myAccessDeniedHandler);
 
-        resources.tokenServices(MyAuthorizationServerConfig.myTokenService);
+        resources.tokenServices(MyAuthorizationServerConfig.myResourceServerTokenServices);
         resources.authenticationManager(myAuthenticationManager());
     }
 
 
     private MyAuthenticationManager myAuthenticationManager(){
         MyAuthenticationManager myAuthenticationManager = new MyAuthenticationManager();
-        myAuthenticationManager.setTokenServices(MyAuthorizationServerConfig.myTokenService);
-        myAuthenticationManager.setClientDetailsService(MyAuthorizationServerConfig.myTokenService.getClientDetailsService());
+        myAuthenticationManager.setTokenServices(MyAuthorizationServerConfig.myResourceServerTokenServices);
+        myAuthenticationManager.setClientDetailsService(MyAuthorizationServerConfig.myResourceServerTokenServices.getClientDetailsService());
         return myAuthenticationManager;
     }
 

@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 处理没有token，或token错误
+ * 处理没有token，或token错误,或token过期
  * 认证异常
  *
  * @Author lty

@@ -1,35 +1,30 @@
 package com.liuliuliu.security.authentication.jwtTokenStore;
 
+import com.liuliuliu.security.authentication.userDetailsService.UserIdUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.common.*;
 import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 import org.springframework.security.oauth2.common.exceptions.InvalidScopeException;
 import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
 import org.springframework.security.oauth2.provider.*;
-import org.springframework.security.oauth2.provider.token.*;
+import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
+import org.springframework.security.oauth2.provider.token.ConsumerTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenEnhancer;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * @Author lty
- * @Date 2019/12/9 10:39
- */
-//@Component
-public class MyTokenService implements AuthorizationServerTokenServices, ResourceServerTokenServices,
-        ConsumerTokenServices, InitializingBean {
+public class MyAuthorizationServerTokenServices implements AuthorizationServerTokenServices, ConsumerTokenServices {
 
-    Logger logger = LoggerFactory.getLogger(MyTokenService.class);
+    Logger logger = LoggerFactory.getLogger(MyAuthorizationServerTokenServices.class);
 
     private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
 
@@ -41,24 +36,16 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
 
     private TokenStore tokenStore;
 
-    private ClientDetailsService clientDetailsService;
-
     private TokenEnhancer accessTokenEnhancer;
+
+    private ClientDetailsService clientDetailsService;
 
     private AuthenticationManager authenticationManager;
 
-    /**
-     * Initialize these token services. If no random generator is set, one will be created.
-     */
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(tokenStore, "tokenStore must be set");
-    }
+    private UserIdUserDetailsService userIdUserDetailsService;
 
     @Override
-    @Transactional
     public OAuth2AccessToken createAccessToken(OAuth2Authentication authentication) throws AuthenticationException {
-
         OAuth2AccessToken existingAccessToken = tokenStore.getAccessToken(authentication);
         OAuth2RefreshToken refreshToken = null;
         if (existingAccessToken != null) {
@@ -104,14 +91,10 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
             tokenStore.storeRefreshToken(refreshToken, authentication);
         }
         return accessToken;
-
     }
 
     @Override
-    @Transactional(noRollbackFor={InvalidTokenException.class, InvalidGrantException.class})
-    public OAuth2AccessToken refreshAccessToken(String refreshTokenValue, TokenRequest tokenRequest)
-            throws AuthenticationException {
-
+    public OAuth2AccessToken refreshAccessToken(String refreshTokenValue, TokenRequest tokenRequest) throws AuthenticationException {
         if (!supportRefreshToken) {
             throw new InvalidGrantException("Invalid refresh token: " + refreshTokenValue);
         }
@@ -126,7 +109,16 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
             // The client has already been authenticated, but the user authentication might be old now, so give it a
             // chance to re-authenticate.
             Authentication user = new PreAuthenticatedAuthenticationToken(authentication.getUserAuthentication(), "", authentication.getAuthorities());
-            user = authenticationManager.authenticate(user);
+
+            UserDetails ud = userIdUserDetailsService.loadUserByUsername(authentication.getPrincipal().toString());
+
+            PreAuthenticatedAuthenticationToken result = new PreAuthenticatedAuthenticationToken(
+                    ud, authentication.getCredentials(), ud.getAuthorities());
+            result.setDetails(authentication.getDetails());
+
+
+
+            user = result;
             Object details = authentication.getDetails();
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
             authentication.setDetails(details);
@@ -162,92 +154,19 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
 
     @Override
     public OAuth2AccessToken getAccessToken(OAuth2Authentication authentication) {
-        return tokenStore.getAccessToken(authentication);
+        return null;
     }
 
-    /**
-     * Create a refreshed authentication.
-     *
-     * @param authentication The authentication.
-     * @param request The scope for the refreshed token.
-     * @return The refreshed authentication.
-     * @throws InvalidScopeException If the scope requested is invalid or wider than the original scope.
-     */
-    private OAuth2Authentication createRefreshedAuthentication(OAuth2Authentication authentication, TokenRequest request) {
-        OAuth2Authentication narrowed = authentication;
-        Set<String> scope = request.getScope();
-        OAuth2Request clientAuth = authentication.getOAuth2Request().refresh(request);
-        if (scope != null && !scope.isEmpty()) {
-            Set<String> originalScope = clientAuth.getScope();
-            if (originalScope == null || !originalScope.containsAll(scope)) {
-                throw new InvalidScopeException("Unable to narrow the scope of the client authentication to " + scope
-                        + ".", originalScope);
-            }
-            else {
-                clientAuth = clientAuth.narrowScope(scope);
-            }
+    private OAuth2AccessToken createAccessToken(OAuth2Authentication authentication, OAuth2RefreshToken refreshToken) {
+        DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(UUID.randomUUID().toString());
+        int validitySeconds = getAccessTokenValiditySeconds(authentication.getOAuth2Request());
+        if (validitySeconds > 0) {
+            token.setExpiration(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
         }
-        narrowed = new OAuth2Authentication(clientAuth, authentication.getUserAuthentication());
-        return narrowed;
-    }
+        token.setRefreshToken(refreshToken);
+        token.setScope(authentication.getOAuth2Request().getScope());
 
-    protected boolean isExpired(OAuth2RefreshToken refreshToken) {
-        if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
-            ExpiringOAuth2RefreshToken expiringToken = (ExpiringOAuth2RefreshToken) refreshToken;
-            return expiringToken.getExpiration() == null
-                    || System.currentTimeMillis() > expiringToken.getExpiration().getTime();
-        }
-        return false;
-    }
-
-    public OAuth2AccessToken readAccessToken(String accessToken) {
-        return tokenStore.readAccessToken(accessToken);
-    }
-
-    public OAuth2Authentication loadAuthentication(String accessTokenValue) throws AuthenticationException,
-            InvalidTokenException {
-        OAuth2AccessToken accessToken = tokenStore.readAccessToken(accessTokenValue);
-        if (accessToken == null) {
-            throw new InvalidTokenException("Invalid access token: " + accessTokenValue);
-        }
-        else if (accessToken.isExpired()) {
-            tokenStore.removeAccessToken(accessToken);
-            throw new InvalidTokenException("Access token expired: " + accessTokenValue);
-        }
-
-        OAuth2Authentication result = tokenStore.readAuthentication(accessToken);
-        if (result == null) {
-            // in case of race condition
-            throw new InvalidTokenException("Invalid access token: " + accessTokenValue);
-        }
-        if (clientDetailsService != null) {
-            String clientId = result.getOAuth2Request().getClientId();
-            try {
-                clientDetailsService.loadClientByClientId(clientId);
-            }
-            catch (ClientRegistrationException e) {
-                throw new InvalidTokenException("Client not valid: " + clientId, e);
-            }
-        }
-
-        //token验证成功；将用户信息放进LocalThread
-        //每次执行方法都会在这里解析token。
-        Object principal = result.getPrincipal();
-        logger.info("验证username:{}是否注销",principal);
-        logger.info("验证username:{}token是否一致",principal);
-        return result;
-    }
-
-    public String getClientId(String tokenValue) {
-        OAuth2Authentication authentication = tokenStore.readAuthentication(tokenValue);
-        if (authentication == null) {
-            throw new InvalidTokenException("Invalid access token: " + tokenValue);
-        }
-        OAuth2Request clientAuth = authentication.getOAuth2Request();
-        if (clientAuth == null) {
-            throw new InvalidTokenException("Invalid access token (no client id): " + tokenValue);
-        }
-        return clientAuth.getClientId();
+        return accessTokenEnhancer != null ? accessTokenEnhancer.enhance(token, authentication) : token;
     }
 
     @Override
@@ -261,31 +180,6 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
         }
         tokenStore.removeAccessToken(accessToken);
         return true;
-    }
-
-    private OAuth2RefreshToken createRefreshToken(OAuth2Authentication authentication) {
-        if (!isSupportRefreshToken(authentication.getOAuth2Request())) {
-            return null;
-        }
-        int validitySeconds = getRefreshTokenValiditySeconds(authentication.getOAuth2Request());
-        String value = UUID.randomUUID().toString();
-        if (validitySeconds > 0) {
-            return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
-                    + (validitySeconds * 1000L)));
-        }
-        return new DefaultOAuth2RefreshToken(value);
-    }
-
-    private OAuth2AccessToken createAccessToken(OAuth2Authentication authentication, OAuth2RefreshToken refreshToken) {
-        DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(UUID.randomUUID().toString());
-        int validitySeconds = getAccessTokenValiditySeconds(authentication.getOAuth2Request());
-        if (validitySeconds > 0) {
-            token.setExpiration(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
-        }
-        token.setRefreshToken(refreshToken);
-        token.setScope(authentication.getOAuth2Request().getScope());
-
-        return accessTokenEnhancer != null ? accessTokenEnhancer.enhance(token, authentication) : token;
     }
 
     /**
@@ -305,21 +199,17 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
         return accessTokenValiditySeconds;
     }
 
-    /**
-     * The refresh token validity period in seconds
-     *
-     * @param clientAuth the current authorization request
-     * @return the refresh token validity period in seconds
-     */
-    protected int getRefreshTokenValiditySeconds(OAuth2Request clientAuth) {
-        if (clientDetailsService != null) {
-            ClientDetails client = clientDetailsService.loadClientByClientId(clientAuth.getClientId());
-            Integer validity = client.getRefreshTokenValiditySeconds();
-            if (validity != null) {
-                return validity;
-            }
+    private OAuth2RefreshToken createRefreshToken(OAuth2Authentication authentication) {
+        if (!isSupportRefreshToken(authentication.getOAuth2Request())) {
+            return null;
         }
-        return refreshTokenValiditySeconds;
+        int validitySeconds = getRefreshTokenValiditySeconds(authentication.getOAuth2Request());
+        String value = UUID.randomUUID().toString();
+        if (validitySeconds > 0) {
+            return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
+                    + (validitySeconds * 1000L)));
+        }
+        return new DefaultOAuth2RefreshToken(value);
     }
 
     /**
@@ -335,6 +225,23 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
             return client.getAuthorizedGrantTypes().contains("refresh_token");
         }
         return this.supportRefreshToken;
+    }
+
+    /**
+     * The refresh token validity period in seconds
+     *
+     * @param clientAuth the current authorization request
+     * @return the refresh token validity period in seconds
+     */
+    protected int getRefreshTokenValiditySeconds(OAuth2Request clientAuth) {
+        if (clientDetailsService != null) {
+            ClientDetails client = clientDetailsService.loadClientByClientId(clientAuth.getClientId());
+            Integer validity = client.getRefreshTokenValiditySeconds();
+            if (validity != null) {
+                return validity;
+            }
+        }
+        return refreshTokenValiditySeconds;
     }
 
     /**
@@ -377,31 +284,12 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
     }
 
     /**
-     * Whether to reuse refresh tokens (until expired).
-     *
-     * @param reuseRefreshToken Whether to reuse refresh tokens (until expired).
-     */
-    public void setReuseRefreshToken(boolean reuseRefreshToken) {
-        this.reuseRefreshToken = reuseRefreshToken;
-    }
-
-    /**
      * The persistence strategy for token storage.
      *
      * @param tokenStore the store for access and refresh tokens.
      */
     public void setTokenStore(TokenStore tokenStore) {
         this.tokenStore = tokenStore;
-    }
-
-    /**
-     * An authentication manager that will be used (if provided) to check the user authentication when a token is
-     * refreshed.
-     *
-     * @param authenticationManager the authenticationManager to set
-     */
-    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
     }
 
     /**
@@ -416,5 +304,58 @@ public class MyTokenService implements AuthorizationServerTokenServices, Resourc
 
     public ClientDetailsService getClientDetailsService() {
         return clientDetailsService;
+    }
+
+    /**
+     * An authentication manager that will be used (if provided) to check the user authentication when a token is
+     * refreshed.
+     *
+     * @param authenticationManager the authenticationManager to set
+     */
+    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
+
+    protected boolean isExpired(OAuth2RefreshToken refreshToken) {
+        if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
+            ExpiringOAuth2RefreshToken expiringToken = (ExpiringOAuth2RefreshToken) refreshToken;
+            return expiringToken.getExpiration() == null
+                    || System.currentTimeMillis() > expiringToken.getExpiration().getTime();
+        }
+        return false;
+    }
+
+    /**
+     * Create a refreshed authentication.
+     *
+     * @param authentication The authentication.
+     * @param request The scope for the refreshed token.
+     * @return The refreshed authentication.
+     * @throws InvalidScopeException If the scope requested is invalid or wider than the original scope.
+     */
+    private OAuth2Authentication createRefreshedAuthentication(OAuth2Authentication authentication, TokenRequest request) {
+        OAuth2Authentication narrowed = authentication;
+        Set<String> scope = request.getScope();
+        OAuth2Request clientAuth = authentication.getOAuth2Request().refresh(request);
+        if (scope != null && !scope.isEmpty()) {
+            Set<String> originalScope = clientAuth.getScope();
+            if (originalScope == null || !originalScope.containsAll(scope)) {
+                throw new InvalidScopeException("Unable to narrow the scope of the client authentication to " + scope
+                        + ".", originalScope);
+            }
+            else {
+                clientAuth = clientAuth.narrowScope(scope);
+            }
+        }
+        narrowed = new OAuth2Authentication(clientAuth, authentication.getUserAuthentication());
+        return narrowed;
+    }
+
+    public UserIdUserDetailsService getUserIdUserDetailsService() {
+        return userIdUserDetailsService;
+    }
+
+    public void setUserIdUserDetailsService(UserIdUserDetailsService userIdUserDetailsService) {
+        this.userIdUserDetailsService = userIdUserDetailsService;
     }
 }

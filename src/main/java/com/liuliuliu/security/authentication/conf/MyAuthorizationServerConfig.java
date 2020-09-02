@@ -1,9 +1,8 @@
 package com.liuliuliu.security.authentication.conf;
 
-import com.liuliuliu.security.authentication.jwtTokenStore.MyTokenService;
+import com.liuliuliu.security.authentication.jwtTokenStore.*;
 import com.liuliuliu.security.authentication.MyWebResponseExceptionTranslator;
-import com.liuliuliu.security.authentication.jwtTokenStore.MyJwtAccessTokenConverter;
-import com.liuliuliu.security.authentication.jwtTokenStore.MyJwtTokenStore;
+import com.liuliuliu.security.authentication.userDetailsService.UserIdUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,8 +11,11 @@ import org.springframework.security.oauth2.config.annotation.configurers.ClientD
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,15 +45,22 @@ public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAd
     @Autowired
     private MyWebResponseExceptionTranslator myWebResponseExceptionTranslator;
 
-    public static MyTokenService myTokenService;
+    @Autowired
+    private UserIdUserDetailsService userIdUserDetailsService;
+
+
+
+    public static MyAuthorizationServerTokenServices myAuthorizationServerTokenServices;
+
+    public static MyResourceServerTokenServices myResourceServerTokenServices;
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.tokenStore(tokenStore)
                 .authenticationManager(authenticationManager)
                 .userDetailsService(usernamePasswordUserDetailsService)
-                .exceptionTranslator(myWebResponseExceptionTranslator);
-                //.tokenServices(createTokenService(endpoints));
+                .exceptionTranslator(myWebResponseExceptionTranslator)
+                ;
 
         if(jwtAccessTokenConverter != null){
             TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
@@ -62,7 +71,13 @@ public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAd
             endpoints.accessTokenConverter(jwtAccessTokenConverter)
                         .tokenEnhancer(tokenEnhancerChain);
         }
+
+
         createTokenService(endpoints);
+        myResourceServerTokenServices(endpoints);
+
+        endpoints.tokenServices(myAuthorizationServerTokenServices);
+
     }
 
     @Override
@@ -79,15 +94,33 @@ public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAd
                 .scopes("all","read","write");
     }
 
-    private MyTokenService createTokenService(AuthorizationServerEndpointsConfigurer endpoints){
-        MyTokenService myTokenService = new MyTokenService();
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 
-        myTokenService.setTokenStore(this.tokenStore);
-        myTokenService.setClientDetailsService(endpoints.getClientDetailsService());
-        myTokenService.setTokenEnhancer(endpoints.getTokenEnhancer());
-        myTokenService.setAuthenticationManager(this.authenticationManager);
+    }
 
-        MyAuthorizationServerConfig.myTokenService = myTokenService;
-        return myTokenService;
+
+
+
+    private MyAuthorizationServerTokenServices createTokenService(AuthorizationServerEndpointsConfigurer endpoints){
+        MyAuthorizationServerTokenServices myAuthorizationServerTokenServices = new MyAuthorizationServerTokenServices();
+        myAuthorizationServerTokenServices.setTokenStore(this.tokenStore);
+        myAuthorizationServerTokenServices.setTokenEnhancer(endpoints.getTokenEnhancer());
+        myAuthorizationServerTokenServices.setClientDetailsService(endpoints.getClientDetailsService());
+        myAuthorizationServerTokenServices.setAuthenticationManager(authenticationManager);
+        myAuthorizationServerTokenServices.setSupportRefreshToken(true);
+        myAuthorizationServerTokenServices.setUserIdUserDetailsService(userIdUserDetailsService);
+
+        MyAuthorizationServerConfig.myAuthorizationServerTokenServices = myAuthorizationServerTokenServices;
+        return myAuthorizationServerTokenServices;
+    }
+
+    public MyResourceServerTokenServices myResourceServerTokenServices(AuthorizationServerEndpointsConfigurer endpoints){
+        MyResourceServerTokenServices myResourceServerTokenServices = new MyResourceServerTokenServices();
+        myResourceServerTokenServices.setTokenStore(this.tokenStore);
+        myResourceServerTokenServices.setClientDetailsService(endpoints.getClientDetailsService());
+
+        MyAuthorizationServerConfig.myResourceServerTokenServices = myResourceServerTokenServices;
+        return myResourceServerTokenServices;
     }
 }

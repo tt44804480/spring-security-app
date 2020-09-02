@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +24,9 @@ public class OauthUserService {
      */
     public UserDetails getUserDetails(String username){
         OauthUserEntity oauthUserEntity = oauthUserDao.queryByUsername(username);
+        if(oauthUserEntity == null){
+            throw new UsernameNotFoundException("用户信息不存在");
+        }
 
         UserDetails userDetails = new User(oauthUserEntity.getUserId().toString(),
                 oauthUserEntity.getPassword(),
@@ -37,6 +41,15 @@ public class OauthUserService {
      * @param userId 用户id
      */
     public UserDetails getUserDetails(Long userId){
-        return null;
+        OauthUserEntity oauthUserEntity = oauthUserDao.queryByUserId(userId);
+        if(oauthUserEntity == null){
+            throw new UsernameNotFoundException("用户信息不存在");
+        }
+
+        UserDetails userDetails = new User(oauthUserEntity.getUserId().toString(),
+                oauthUserEntity.getPassword(),
+                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,ROLE_USER"));
+
+        return userDetails;
     }
 }

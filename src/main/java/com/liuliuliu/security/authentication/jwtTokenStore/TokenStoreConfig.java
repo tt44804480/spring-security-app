@@ -23,6 +23,13 @@ public class TokenStoreConfig {
 
     public static final String SIGNING_KEY = "liuliuliu";
 
+    /**
+     * 默认的springsecurity实现的token是uuid，并且是存放到内存中，项目重启token就丢失了。
+     * 所以这里可以配置一个bean,将token存放到redis中
+     * 但是也有另一个时髦的配置是--使用jwt。所以这个bean就不需要了
+     * @param redisConnectionFactory
+     * @return
+     */
     //@Bean
     public TokenStore tokenStore(RedisConnectionFactory redisConnectionFactory){
         return new  RedisTokenStore(redisConnectionFactory);
@@ -44,7 +51,30 @@ public class TokenStoreConfig {
         }
 
         //@Bean
-        public AuthorizationServerTokenServices myTokenService(TokenStore myJwtTokenStore,
+        public MyResourceServerTokenServices myResourceServerTokenServices(TokenStore myJwtTokenStore,
+                                                                           ClientDetailsService clientDetailsService){
+            MyResourceServerTokenServices myResourceServerTokenServices = new MyResourceServerTokenServices();
+            myResourceServerTokenServices.setTokenStore(myJwtTokenStore);
+            myResourceServerTokenServices.setClientDetailsService(clientDetailsService);
+
+            return myResourceServerTokenServices;
+        }
+
+        //@Bean
+        public MyAuthorizationServerTokenServices myAuthorizationServerTokenServices(TokenStore myJwtTokenStore,
+                                                                                     TokenEnhancer myJwtAccessTokenConverter,
+                                                                                     ClientDetailsService clientDetailsService){
+            MyAuthorizationServerTokenServices myAuthorizationServerTokenServices = new MyAuthorizationServerTokenServices();
+            myAuthorizationServerTokenServices.setTokenStore(myJwtTokenStore);
+            myAuthorizationServerTokenServices.setTokenEnhancer(myJwtAccessTokenConverter);
+            myAuthorizationServerTokenServices.setClientDetailsService(clientDetailsService);
+
+            return myAuthorizationServerTokenServices;
+
+        }
+
+        //@Bean
+        /*public MyTokenService myTokenService(TokenStore myJwtTokenStore,
                                                                ClientDetailsService clientDetailsService,
                                                                TokenEnhancer myJwtAccessTokenConverter,
                                                                AuthenticationManager authenticationManager){
@@ -55,7 +85,7 @@ public class TokenStoreConfig {
             myTokenService.setAuthenticationManager(authenticationManager);
 
             return myTokenService;
-        }
+        }*/
 
     }
 }

@@ -1,6 +1,7 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.authenticationSuccessHandler;
 
 import com.alibaba.fastjson.JSON;
+import com.liuliuliu.security.authentication.conf.MyAuthorizationServerConfig;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -40,9 +41,9 @@ public class MyAuthenticationSuccessHandler implements AuthenticationSuccessHand
     @Autowired
     private ClientDetailsService clientDetailsService;
 
-    @Autowired
+    /*@Autowired
     @Qualifier("defaultAuthorizationServerTokenServices")
-    private AuthorizationServerTokenServices authorizationServerTokenServices;
+    private AuthorizationServerTokenServices authorizationServerTokenServices;*/
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -86,7 +87,7 @@ public class MyAuthenticationSuccessHandler implements AuthenticationSuccessHand
 
         OAuth2Authentication oAuth2Authentication = new OAuth2Authentication(oAuth2Request, authentication);
 
-        OAuth2AccessToken accessToken = authorizationServerTokenServices.createAccessToken(oAuth2Authentication);
+        OAuth2AccessToken accessToken = MyAuthorizationServerConfig.myAuthorizationServerTokenServices.createAccessToken(oAuth2Authentication);
 
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(JSON.toJSONString(accessToken));

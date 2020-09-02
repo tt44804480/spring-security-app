@@ -1,4 +1,4 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.authenticationFailureHandler;
 
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
