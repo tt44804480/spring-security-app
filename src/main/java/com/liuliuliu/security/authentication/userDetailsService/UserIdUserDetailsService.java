@@ -15,8 +15,17 @@ import org.springframework.stereotype.Component;
  * @author liutianyang
  * @since 1.0
  */
+
+/**
+ * 如果想用UsernamePasswordUserDetailsService进行默认的用户名密码登录 那么ioc容器中就不能存在2个以上的
+ * UserDetailsService 类型的bean，
+ * 因为 org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer.InitializeUserDetailsManagerConfigurer#getBeanOrNull(java.lang.Class)
+ * 这个方法会拿出来所有的UserDetailsService 类型的bean，判断如果大于一个  就返回默认的bean了  坑，待解决
+ */
 @Component("userIdUserDetailsService")
-public class UserIdUserDetailsService implements UserDetailsService {
+public class UserIdUserDetailsService
+        //implements UserDetailsService
+{
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -29,7 +38,7 @@ public class UserIdUserDetailsService implements UserDetailsService {
      * @return UserDetails
      * @throws UsernameNotFoundException
      */
-    @Override
+    //@Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
         UserDetails userDetails = oauthUserService.getUserDetails(Long.valueOf(userId));
