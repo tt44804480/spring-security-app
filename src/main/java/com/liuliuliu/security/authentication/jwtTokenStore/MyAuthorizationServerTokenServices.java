@@ -148,6 +148,10 @@ public class MyAuthorizationServerTokenServices implements AuthorizationServerTo
         tokenStore.storeAccessToken(accessToken, authentication);
         if (!reuseRefreshToken) {
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
+        }else{
+            if(accessToken instanceof DefaultOAuth2AccessToken){
+                ((DefaultOAuth2AccessToken)accessToken).setRefreshToken(null);
+            }
         }
         return accessToken;
     }
