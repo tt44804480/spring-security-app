@@ -1,11 +1,10 @@
 package com.liuliuliu.message.handler;
 
 import com.liuliuliu.message.exception.MyCustomException;
+import com.liuliuliu.security.authentication.utils.RestResult;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class MyControllerAdvice {
@@ -14,13 +13,13 @@ public class MyControllerAdvice {
      * 处理自定义异常
      */
     @ExceptionHandler(MyCustomException.class)
-    public Map<String, Object> handleException(RuntimeException e){
+    public RestResult handleException(RuntimeException e){
 
-        Map<String,Object> map = new HashMap<>();
+        RestResult restResult = new RestResult();
+        restResult.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        restResult.setMsg(e.getMessage());
+        restResult.setSince("myControllerAdvice");
 
-        map.put("code", "500");
-        map.put("msg", e.getMessage());
-
-        return map;
+        return restResult;
     }
 }

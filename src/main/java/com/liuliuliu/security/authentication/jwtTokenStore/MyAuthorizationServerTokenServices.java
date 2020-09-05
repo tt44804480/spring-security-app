@@ -153,6 +153,7 @@ public class MyAuthorizationServerTokenServices implements AuthorizationServerTo
                 ((DefaultOAuth2AccessToken)accessToken).setRefreshToken(null);
             }
         }
+
         return accessToken;
     }
 

@@ -1,6 +1,8 @@
 package com.liuliuliu.security.authentication;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.fastjson.JSONObject;
+import com.liuliuliu.security.authentication.utils.RestResult;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
@@ -9,8 +11,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 自定义资源服务器异常处理
@@ -23,19 +23,20 @@ import java.util.Map;
 public class MyAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+
+        RestResult restResult = new RestResult();
+        restResult.setCode(HttpStatus.BAD_REQUEST.value());
+        restResult.setMsg(accessDeniedException.getMessage());
+        restResult.setSince("myAccessDeniedHandler");
+
         response.setContentType("application/json;charset=UTF-8");
-        Map map = new HashMap();
-        map.put("errorauth", "400");
-        map.put("message", accessDeniedException.getMessage());
-        map.put("path", request.getServletPath());
-        map.put("timestamp", String.valueOf(System.currentTimeMillis()));
-        response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        try {
+        response.getWriter().write(JSONObject.toJSONString(restResult));
+
+       /* try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(response.getOutputStream(), map);
+            mapper.writeValue(response.getOutputStream(), restResult);
         } catch (Exception e) {
             throw new ServletException();
-        }
+        }*/
     }
 }

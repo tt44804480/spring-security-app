@@ -1,11 +1,10 @@
 package com.liuliuliu.security.authentication.authenticationFailureHandler;
 
 import com.alibaba.fastjson.JSONObject;
+import com.liuliuliu.security.authentication.utils.RestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -14,8 +13,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 登录失败处理类
@@ -35,10 +32,10 @@ public class MyAuthenticationFailureHandler implements AuthenticationFailureHand
             throws IOException, ServletException {
         logger.info("登录失败");
         httpServletResponse.setContentType("application/json;charset=UTF-8");
-        Map<String, Object> result = new HashMap<>();
-        result.put("code", "xxx");
-        result.put("msg", e.getMessage());
-        result.put("data", null);
+        RestResult restResult = new RestResult();
+        restResult.setCode(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value());
+        restResult.setMsg( e.getMessage());
+        restResult.setSince("myAuthenticationFailureHandler");
         /**
          * 处理对应的异常响应
          */
@@ -52,6 +49,6 @@ public class MyAuthenticationFailureHandler implements AuthenticationFailureHand
             httpServletResponse.getWriter().write(e.getLocalizedMessage());
         }*/
 
-        httpServletResponse.getWriter().write(JSONObject.toJSONString(result));
+        httpServletResponse.getWriter().write(JSONObject.toJSONString(restResult));
     }
 }

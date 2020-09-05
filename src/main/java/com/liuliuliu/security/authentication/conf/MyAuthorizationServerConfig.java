@@ -85,9 +85,9 @@ public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAd
         clients.inMemory().withClient("liu")
                 .secret("liuliuliu")
                 //token的过期时间，0是永不过期
-                .accessTokenValiditySeconds(3600)
+                .accessTokenValiditySeconds(36000)//1个小时
                 //refreshToken的过期时间
-                .refreshTokenValiditySeconds(2592000)
+                .refreshTokenValiditySeconds(2592000)//1个月
                 //liu 这个应用支持的授权模式
                 .authorizedGrantTypes("refresh_token","password","mobile")
                 //请求参数中的scope只可以是配置的值,类似权限
@@ -96,7 +96,6 @@ public class MyAuthorizationServerConfig extends AuthorizationServerConfigurerAd
 
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-
     }
 
 

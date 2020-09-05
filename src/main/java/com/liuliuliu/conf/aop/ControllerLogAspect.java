@@ -1,12 +1,14 @@
 package com.liuliuliu.conf.aop;
 
 import com.alibaba.fastjson.JSON;
+import com.liuliuliu.security.authentication.utils.RestResult;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Component;
@@ -54,7 +56,13 @@ public class ControllerLogAspect {
             result = pjp.proceed();
             long endTime = System.currentTimeMillis();
             log.info(userId + " " + declaringType + "." + methodName + " 结束. " + (endTime-startTime) + "ms");
-            return result;
+
+            RestResult restResult = new RestResult();
+            restResult.setCode(HttpStatus.OK.value());
+            restResult.setSince("controllerAop");
+            restResult.setData(result);
+
+            return restResult;
         } else {
             return pjp.proceed();
         }
