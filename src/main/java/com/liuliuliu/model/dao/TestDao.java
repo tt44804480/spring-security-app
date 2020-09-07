@@ -9,4 +9,6 @@ import java.util.List;
 public interface TestDao {
 
     List<Student> queryStudent(Student student);
+
+    void updateNameById(Student student);
 }
