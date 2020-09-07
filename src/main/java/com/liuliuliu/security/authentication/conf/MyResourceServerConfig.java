@@ -3,7 +3,6 @@ package com.liuliuliu.security.authentication.conf;
 import com.liuliuliu.security.authentication.MyAccessDeniedHandler;
 import com.liuliuliu.security.authentication.MyAuthenticationEntryPoint;
 import com.liuliuliu.security.authentication.MyAuthenticationManager;
-import com.liuliuliu.security.authentication.jwtTokenStore.MyResourceServerTokenServices;
 import com.liuliuliu.security.authentication.mobile.SmsCodeAuthenticationSecurityConfig;
 import com.liuliuliu.security.constant.AuthorizationConstant;
 import com.liuliuliu.security.validate.code.ValidateCodeFilter;
@@ -11,6 +10,7 @@ import com.liuliuliu.security.validate.code.ValidateSmsCodeFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
@@ -74,6 +74,7 @@ public class MyResourceServerConfig extends ResourceServerConfigurerAdapter {
                     .antMatchers("/authentication/require",
                             "/code/*",
                             "/user/admin").permitAll()
+                    .antMatchers(HttpMethod.GET, "/test/test2").hasRole("liu")
                     .anyRequest()
                     .authenticated()
                     .and()

@@ -30,7 +30,7 @@ public class OauthUserService {
 
         UserDetails userDetails = new User(oauthUserEntity.getUserId().toString(),
                 oauthUserEntity.getPassword(),
-                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,ROLE_USER"));
+                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,ROLE_USER,ROLE_liu"));
 
         return userDetails;
     }
