@@ -1,4 +1,4 @@
-package com.liuliuliu.security.validate.code;
+package com.liuliuliu.security.authentication.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

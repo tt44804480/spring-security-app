@@ -1,10 +1,10 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.authenticationFailureHandler;
 
+import com.alibaba.fastjson.JSONObject;
+import com.liuliuliu.security.authentication.utils.RestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -31,13 +31,15 @@ public class MyAuthenticationFailureHandler implements AuthenticationFailureHand
                                         AuthenticationException e)
             throws IOException, ServletException {
         logger.info("登录失败");
-        logger.info(e.getMessage());
-        logger.info(e.getLocalizedMessage());
         httpServletResponse.setContentType("application/json;charset=UTF-8");
+        RestResult restResult = new RestResult();
+        restResult.setCode(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value());
+        restResult.setMsg( e.getMessage());
+        restResult.setSince("myAuthenticationFailureHandler");
         /**
          * 处理对应的异常响应
          */
-        if(e instanceof BadCredentialsException){
+        /*if(e instanceof BadCredentialsException){
             httpServletResponse.getWriter().write("帐号或密码错误");
         }else if(e instanceof LockedException){
             httpServletResponse.getWriter().write("用户已锁定");
@@ -45,6 +47,8 @@ public class MyAuthenticationFailureHandler implements AuthenticationFailureHand
             httpServletResponse.getWriter().write("用户不存在");
         }else{
             httpServletResponse.getWriter().write(e.getLocalizedMessage());
-        }
+        }*/
+
+        httpServletResponse.getWriter().write(JSONObject.toJSONString(restResult));
     }
 }

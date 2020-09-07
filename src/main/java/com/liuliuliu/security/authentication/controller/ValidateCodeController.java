@@ -1,6 +1,8 @@
-package com.liuliuliu.security.validate.code;
+package com.liuliuliu.security.authentication.controller;
 
 import com.liuliuliu.security.validate.ValidateCodeRepository;
+import com.liuliuliu.security.validate.code.ImageCode;
+import com.liuliuliu.security.validate.code.SmsCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

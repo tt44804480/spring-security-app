@@ -33,4 +33,9 @@
         </where>
     </select>
 
+    <update id="updateNameById" parameterType="com.liuliuliu.model.entity.Student" >
+        update student set name = #{name}
+        where id = #{id}
+    </update>
+
 </mapper>

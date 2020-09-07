@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
  * @author liutianyang
  * @create 2019-01-2019/1/19
  */
-@MapperScan(value = "com.liuliuliu.model.dao")
+@MapperScan(value = {"com.liuliuliu.model.dao", "com.liuliuliu.security.db.dao"})
 @org.springframework.context.annotation.Configuration
 public class MybatisConfig {
 

@@ -1,6 +1,7 @@
-package com.liuliuliu.security.authentication;
+package com.liuliuliu.security.authentication.authenticationSuccessHandler;
 
 import com.alibaba.fastjson.JSON;
+import com.liuliuliu.security.authentication.conf.MyAuthorizationServerConfig;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -8,7 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.codec.Base64;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.exceptions.UnapprovedClientAuthenticationException;
@@ -37,9 +41,9 @@ public class MyAuthenticationSuccessHandler implements AuthenticationSuccessHand
     @Autowired
     private ClientDetailsService clientDetailsService;
 
-    @Autowired
+    /*@Autowired
     @Qualifier("defaultAuthorizationServerTokenServices")
-    private AuthorizationServerTokenServices authorizationServerTokenServices;
+    private AuthorizationServerTokenServices authorizationServerTokenServices;*/
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -72,18 +76,18 @@ public class MyAuthenticationSuccessHandler implements AuthenticationSuccessHand
 
         //校验 grant_type
         Set<String> authorizedGrantTypes = clientDetails.getAuthorizedGrantTypes();
-        boolean grant_type = authorizedGrantTypes.contains(request.getParameter("grant_type"));
-        if(!grant_type){
+        String grantType = request.getParameter("grant_type");
+        boolean isGrantType = authorizedGrantTypes.contains(grantType);
+        if(!isGrantType){
             throw new UnapprovedClientAuthenticationException("不支持的授权类型，grant_type:{}"+ request.getParameter("grant_type"));
         }
-
 
         TokenRequest tokenRequest = new TokenRequest(MapUtils.EMPTY_MAP, clientId, clientDetails.getScope(), "custom");
         OAuth2Request oAuth2Request = tokenRequest.createOAuth2Request(clientDetails);
 
         OAuth2Authentication oAuth2Authentication = new OAuth2Authentication(oAuth2Request, authentication);
 
-        OAuth2AccessToken accessToken = authorizationServerTokenServices.createAccessToken(oAuth2Authentication);
+        OAuth2AccessToken accessToken = MyAuthorizationServerConfig.myAuthorizationServerTokenServices.createAccessToken(oAuth2Authentication);
 
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(JSON.toJSONString(accessToken));

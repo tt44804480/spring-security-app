@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuliuliu.security.db.dao.OauthUserDao">
+
+    <resultMap id="base_user" type="com.liuliuliu.security.db.entity.OauthUserEntity">
+        <id property="id" column="id"></id>
+        <result property="userId" column="user_id"></result>
+        <result property="username" column="username"></result>
+        <result property="password" column="password"></result>
+        <result property="accountNonExpired" column="account_non_expired"></result>
+        <result property="accountNonLocked" column="account_non_locked"></result>
+        <result property="credentialsNonExpired" column="credentials_non_expired"></result>
+        <result property="enabled" column="enabled"></result>
+    </resultMap>
+
+    <sql id="base_sql">
+        user_id, username, password, account_non_expired, account_non_locked, credentials_non_expired, enabled
+    </sql>
+
+    <select id="queryByUserId" parameterType="long" resultMap="base_user">
+        select id,
+        <include refid="base_sql"></include>
+        from oauth_user
+        where user_id = #{userId}
+    </select>
+
+    <select id="queryByUsername" parameterType="string" resultMap="base_user">
+        select id,
+        <include refid="base_sql"></include>
+        from oauth_user
+        where username = #{username}
+    </select>
+
+</mapper>
